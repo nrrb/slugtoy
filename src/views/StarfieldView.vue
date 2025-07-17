@@ -16,6 +16,8 @@ const props = defineProps({
   }
 });
 
+const TEXT_SPEED = 10;
+
 const container = ref(null);
 const slugText = ref(props.slug);
 let scene, camera, renderer, stars = [];
@@ -24,7 +26,7 @@ let textMesh = null;
 let font = null;
 
 // Starfield parameters
-const STAR_COUNT = 1000;
+const STAR_COUNT = 2000;
 const MAX_DEPTH = 2000;
 const SPEED = 10;
 
@@ -70,14 +72,16 @@ const createText = () => {
   );
   
   const textMaterial = new THREE.MeshPhongMaterial({
+    // make the color random
     color: 0xffffff,
-    specular: 0x111111,
-    shininess: 30,
+    specular: 0xff0000,
+    shininess: 150,
     flatShading: true
   });
   
   textMesh = new THREE.Mesh(textGeometry, textMaterial);
   textMesh.position.x = centerOffset;
+//  textMesh.position.y = -100;
   textMesh.position.z = -2500; // Start behind the camera
   scene.add(textMesh);
 };
@@ -167,7 +171,7 @@ const animate = () => {
   
   // Animate text if it exists
   if (textMesh) {
-    textMesh.position.z += 2;
+    textMesh.position.z += TEXT_SPEED;
     //textMesh.rotation.y += Math.random() * 0.01;
     //textMesh.rotation.x += Math.random() * 0.01;
     
