@@ -168,8 +168,8 @@ const animate = () => {
   // Animate text if it exists
   if (textMesh) {
     textMesh.position.z += 2;
-    textMesh.rotation.y += Math.random() * 0.01;
-    textMesh.rotation.x += Math.random() * 0.01;
+    //textMesh.rotation.y += Math.random() * 0.01;
+    //textMesh.rotation.x += Math.random() * 0.01;
     
     // Reset text position when it gets too close
     if (textMesh.position.z > 500) {
