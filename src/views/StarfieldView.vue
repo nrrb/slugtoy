@@ -1,22 +1,89 @@
 <template>
-  <div ref="container" class="starfield-container"></div>
+  <div ref="container" class="starfield-container">
+  </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue';
+import { ref, onMounted, onBeforeUnmount, watch } from 'vue';
 import * as THREE from 'three';
+import { FontLoader } from 'three/examples/jsm/loaders/FontLoader';
+import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry';
+
+const props = defineProps({
+  slug: {
+    type: String,
+    default: ''
+  }
+});
 
 const container = ref(null);
+const slugText = ref(props.slug);
 let scene, camera, renderer, stars = [];
 let animationFrameId = null;
+let textMesh = null;
+let font = null;
 
 // Starfield parameters
 const STAR_COUNT = 1000;
 const MAX_DEPTH = 2000;
 const SPEED = 10;
 
+// Load font
+const fontLoader = new FontLoader();
+
+// Add lights to the scene
+const addLights = () => {
+  const ambientLight = new THREE.AmbientLight(0x404040);
+  scene.add(ambientLight);
+  
+  const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+  directionalLight.position.set(1, 1, 1);
+  scene.add(directionalLight);
+};
+
+// Create text geometry from slug
+const createText = () => {
+  if (!slugText.value || !font) return;
+  
+  // Remove existing text if any
+  if (textMesh) {
+    scene.remove(textMesh);
+    textMesh.geometry.dispose();
+    textMesh.material.dispose();
+  }
+  
+  const textGeometry = new TextGeometry(slugText.value, {
+    font: font,
+    size: 50,
+    height: 2,
+    curveSegments: 4,
+    bevelEnabled: true,
+    bevelThickness: 0.5,
+    bevelSize: 0.3,
+    bevelOffset: 0,
+    bevelSegments: 2
+  });
+  
+  textGeometry.computeBoundingBox();
+  const centerOffset = -0.5 * (
+    textGeometry.boundingBox.max.x - textGeometry.boundingBox.min.x
+  );
+  
+  const textMaterial = new THREE.MeshPhongMaterial({
+    color: 0xffffff,
+    specular: 0x111111,
+    shininess: 30,
+    flatShading: true
+  });
+  
+  textMesh = new THREE.Mesh(textGeometry, textMaterial);
+  textMesh.position.x = centerOffset;
+  textMesh.position.z = -2500; // Start behind the camera
+  scene.add(textMesh);
+};
+
 // Initialize the scene
-const init = () => {
+const init = async () => {
   // Scene setup
   scene = new THREE.Scene();
   
@@ -25,15 +92,35 @@ const init = () => {
   camera = new THREE.PerspectiveCamera(75, aspect, 0.1, 10000);
   camera.position.z = 0;
   
-  // Renderer setup
+  // Set up renderer
   renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setPixelRatio(window.devicePixelRatio);
   container.value.appendChild(renderer.domElement);
   
+  // Load font
+  try {
+    font = await new Promise((resolve, reject) => {
+      fontLoader.load(
+        'https://threejs.org/examples/fonts/helvetiker_regular.typeface.json',
+        resolve,
+        undefined,
+        reject
+      );
+    });
+  } catch (error) {
+    console.error('Failed to load font:', error);
+  }
+  
   // Create stars
   for (let i = 0; i < STAR_COUNT; i++) {
     createStar();
+  }
+  
+  // Add lights and create text if slug is provided
+  addLights();
+  if (slugText.value) {
+    createText();
   }
 };
 
@@ -78,6 +165,21 @@ const animate = () => {
     }
   });
   
+  // Animate text if it exists
+  if (textMesh) {
+    textMesh.position.z += 2;
+    textMesh.rotation.y += Math.random() * 0.01;
+    textMesh.rotation.x += Math.random() * 0.01;
+    
+    // Reset text position when it gets too close
+    if (textMesh.position.z > 500) {
+      textMesh.position.z = -2500;
+      // Randomly position the text in the view
+      textMesh.position.x = (Math.random() - 0.5) * 1000;
+      textMesh.position.y = (Math.random() - 0.5) * 500;
+    }
+  }
+  
   renderer.render(scene, camera);
 };
 
@@ -89,6 +191,14 @@ const onWindowResize = () => {
 };
 
 // Lifecycle hooks
+// Watch for slug changes
+watch(() => props.slug, (newSlug) => {
+  slugText.value = newSlug;
+  if (font) {
+    createText();
+  }
+});
+
 onMounted(() => {
   init();
   animate();
@@ -101,9 +211,14 @@ onBeforeUnmount(() => {
     cancelAnimationFrame(animationFrameId);
   }
   
-  // Clean up Three.js objects
+  // Clean up renderer
   if (renderer) {
     renderer.dispose();
+    if (renderer.domElement && renderer.domElement.parentNode) {
+      renderer.domElement.parentNode.removeChild(renderer.domElement);
+    }
+    renderer.forceContextLoss();
+    renderer = null;
   }
   
   if (scene) {
@@ -134,5 +249,23 @@ onBeforeUnmount(() => {
 
 canvas {
   display: block;
+}
+
+.slug-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #00ffff;
+  font-family: 'Arial', sans-serif;
+  font-size: 24px;
+  text-align: center;
+  text-shadow: 0 0 10px rgba(0, 255, 255, 0.7);
+  opacity: 0.8;
+  pointer-events: none;
+  z-index: 100;
+  width: 100%;
+  padding: 20px;
+  box-sizing: border-box;
 }
 </style>
