@@ -16,7 +16,7 @@ const props = defineProps({
   }
 });
 
-const TEXT_SPEED = 10;
+const TEXT_SPEED = 0;
 
 const container = ref(null);
 const slugText = ref(props.slug);
@@ -73,7 +73,7 @@ const createText = () => {
   
   const textMaterial = new THREE.MeshPhongMaterial({
     // make the color random
-    color: 0xffffff,
+    color: coolors[Math.floor(Math.random() * coolors.length)],
     specular: 0xff0000,
     shininess: 150,
     flatShading: true
@@ -82,7 +82,7 @@ const createText = () => {
   textMesh = new THREE.Mesh(textGeometry, textMaterial);
   textMesh.position.x = centerOffset;
 //  textMesh.position.y = -100;
-  textMesh.position.z = -2500; // Start behind the camera
+  textMesh.position.z = -500; // Start behind the camera
   scene.add(textMesh);
 };
 
@@ -128,11 +128,13 @@ const init = async () => {
   }
 };
 
+const coolors = [0xffbe0b, 0xfb5607, 0xff006e, 0x8338ec, 0x3a86ff];
+
 // Create a single star
 const createStar = () => {
   const geometry = new THREE.BufferGeometry();
   const material = new THREE.PointsMaterial({
-    color: 0xffffff,
+    color: coolors[Math.floor(Math.random() * coolors.length)],
     size: Math.random() * 2 + 1,
     transparent: true,
     opacity: 0.8
@@ -172,8 +174,8 @@ const animate = () => {
   // Animate text if it exists
   if (textMesh) {
     textMesh.position.z += TEXT_SPEED;
-    //textMesh.rotation.y += Math.random() * 0.01;
-    //textMesh.rotation.x += Math.random() * 0.01;
+    textMesh.rotation.y = Math.sin(Date.now() / 2000);
+    textMesh.rotation.x = Math.cos(Date.now() / 2000);
     
     // Reset text position when it gets too close
     if (textMesh.position.z > 500) {
