@@ -16,8 +16,6 @@ const props = defineProps({
   }
 });
 
-const TEXT_SPEED = 0;
-
 const container = ref(null);
 const slugText = ref(props.slug);
 let scene, camera, renderer, stars = [];
@@ -175,17 +173,9 @@ const animate = () => {
   
   // Animate text if it exists
   if (textMesh) {
-    textMesh.position.z += TEXT_SPEED;
-    textMesh.rotation.y = Math.sin(Date.now() / 2000);
-    textMesh.rotation.x = Math.cos(Date.now() / 2000);
-    
-    // Reset text position when it gets too close
-    if (textMesh.position.z > 500) {
-      textMesh.position.z = -2500;
-      // Randomly position the text in the view
-      textMesh.position.x = (Math.random() - 0.5) * 1000;
-      textMesh.position.y = (Math.random() - 0.5) * 500;
-    }
+    textMesh.position.z = 100*(Math.cos(Date.now() / 200) + Math.sin(Date.now() / 200)) - MAX_DEPTH / 2;
+    textMesh.position.y = 100*Math.sin(Date.now() / 200);
+    textMesh.position.x = 200*Math.cos(Date.now() / 200);
   }
   
   renderer.render(scene, camera);
