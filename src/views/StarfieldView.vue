@@ -1,5 +1,5 @@
 <template>
-  <div ref="container" class="starfield-container">
+  <div ref="container" class="starfield-container" :style="{ backgroundColor: coolorsAsHex[Math.floor(Math.random() * coolorsAsHex.length)] }">
   </div>
 </template>
 
@@ -129,13 +129,15 @@ const init = async () => {
 };
 
 const coolors = [0xffbe0b, 0xfb5607, 0xff006e, 0x8338ec, 0x3a86ff];
+const coolorsAsHex = coolors.map(color => `#${color.toString(16)}`);
 
 // Create a single star
 const createStar = () => {
   const geometry = new THREE.BufferGeometry();
   const material = new THREE.PointsMaterial({
-    color: coolors[Math.floor(Math.random() * coolors.length)],
-    size: Math.random() * 2 + 1,
+//    color: coolors[Math.floor(Math.random() * coolors.length)],
+    color: 0xffffff,
+    size: Math.random() * 9 + 1,
     transparent: true,
     opacity: 0.8
   });
@@ -143,7 +145,7 @@ const createStar = () => {
   // Position the star in 3D space
   const x = Math.random() * 2000 - 1000;
   const y = Math.random() * 2000 - 1000;
-  const z = Math.random() * MAX_DEPTH - MAX_DEPTH / 2;
+  const z = Math.random() * MAX_DEPTH - MAX_DEPTH;
   
   const vertices = new Float32Array([x, y, z]);
   geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
@@ -250,7 +252,7 @@ onBeforeUnmount(() => {
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-  background-color: #000;
+  /*background-color: #ffbe0b;*/
 }
 
 canvas {
