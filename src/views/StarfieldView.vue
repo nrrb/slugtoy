@@ -22,6 +22,8 @@ let scene, camera, renderer, stars = [];
 let animationFrameId = null;
 let textMesh = null;
 let font = null;
+const mouse = new THREE.Vector2();
+const targetPosition = new THREE.Vector3();
 
 // Starfield parameters
 const STAR_COUNT = 2000;
@@ -54,8 +56,8 @@ const createText = () => {
   
   const textGeometry = new TextGeometry(slugText.value, {
     font: font,
-    size: 50,
-    height: 2,
+    size: 100,
+    height: 100,
     curveSegments: 4,
     bevelEnabled: true,
     bevelThickness: 0.5,
@@ -98,6 +100,9 @@ const init = async () => {
   renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setPixelRatio(window.devicePixelRatio);
+  
+  // Add mousemove event listener
+  container.value.addEventListener('mousemove', onMouseMove);
   container.value.appendChild(renderer.domElement);
   
   // Load font
@@ -154,6 +159,13 @@ const createStar = () => {
   stars.push(star);
 };
 
+// Handle mouse move
+const onMouseMove = (event) => {
+  // Calculate mouse position in normalized device coordinates (-1 to +1)
+  mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+  mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
+};
+
 // Animation loop
 const animate = () => {
   animationFrameId = requestAnimationFrame(animate);
@@ -171,11 +183,21 @@ const animate = () => {
     }
   });
   
-  // Animate text if it exists
+  // Update text position to follow mouse
   if (textMesh) {
-    textMesh.position.z = 100*(Math.cos(Date.now() / 200) + Math.sin(Date.now() / 200)) - MAX_DEPTH / 2;
-    textMesh.position.y = 100*Math.sin(Date.now() / 200);
-    textMesh.position.x = 200*Math.cos(Date.now() / 200);
+    // Convert mouse position to 3D world position
+    targetPosition.set(
+      mouse.x * (window.innerWidth / 4), // Adjust multiplier for sensitivity
+      mouse.y * (window.innerHeight / 4),
+      -500 // Keep the same Z position
+    );
+    
+    // Smoothly interpolate to target position
+    textMesh.position.lerp(targetPosition, 0.1);
+    
+    // Add a subtle rotation based on mouse position
+    textMesh.rotation.y = mouse.x * 0.5;
+    textMesh.rotation.x = -mouse.y * 0.2;
   }
   
   renderer.render(scene, camera);
@@ -207,6 +229,11 @@ onBeforeUnmount(() => {
   window.removeEventListener('resize', onWindowResize);
   if (animationFrameId) {
     cancelAnimationFrame(animationFrameId);
+  }
+  
+  // Remove mousemove event listener
+  if (container.value) {
+    container.value.removeEventListener('mousemove', onMouseMove);
   }
   
   // Clean up renderer
